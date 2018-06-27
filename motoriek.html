@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script language=javascript>
+<script language="javascript">
 	var moves = [
 		"wu sau", "tahn sau", "fook sau", "tsing cheung", "gum sau", "kong sau",
 		"hang sau", "pak sau", "fak sau", "woei sau", "cham sau", "jat sau",
-		"biu sau", "hit", "dun sau", "kwan sau", "wang cheung", "dai cheung", "bong sau", "sau kuen"
+		"biu sau", "upper hit", "dun sau", "kwan sau", "wang cheung", "dai cheung", "bong sau", "sau kuen",
+		"lower kang sau", "upper kau sau", "tip san pak sau", "hoi san pak sau", "lower hit"
 	];
 	var selected_moves = [];
 	var m = 0;
@@ -13,14 +14,14 @@
 	var stopped = true;
 	var paused = false;
 	var interval;
+	var current_rep = 1;
 
-	function init()
-	{
+	function init() {
 		var cols = 5;
-		var text = "<table border=0>";
-		for (i=0; i < moves.length; i++) {
+		var text = '<table border="0" align="center">';
+		for (var i=0; i < moves.length; i++) {
 			if (i%cols == 0) { text += "<tr>"; }
-			text += "<td><input type=\"checkbox\" id=\"cb" + i + "\" value=\"" + i + "\" onchange=\"reload()\" checked>&nbsp;" + moves[i] + "</td>";
+			text += '<td align="left"><input type="checkbox" id="cb' + i + '" value="' + i + '" onchange="reload()" checked>&nbsp;' + moves[i] + '</td>';
 			if (i%cols == cols-1) { text += "</tr>"; }
 		}
 		text += "</table>";
@@ -28,10 +29,8 @@
 		reload();
 	}
 	
-	function set_selected(checked)
-	{
-		for (i=0; i < moves.length; i++)
-		{
+	function set_selected(checked) {
+		for (i=0; i < moves.length; i++) {
 			var checkbox = document.getElementById("cb" + i);
 			checkbox.checked = checked;
 		}
@@ -41,11 +40,9 @@
 	function reload()
 	{
 		selected_moves = [];
-		for (i=0; i < moves.length; i++)
-		{
+		for (i=0; i < moves.length; i++) {
 			var checkbox = document.getElementById("cb" + i);
-			if (checkbox.checked)
-			{
+			if (checkbox.checked) {
 				var move = moves[checkbox.value];
 				selected_moves.push(move);
 			}
@@ -54,12 +51,10 @@
 		//document.getElementById("movelist").innerHTML += selected_moves.toString();
 	}
 
-	function to_nieuw()
-	{
+	function to_nieuw() {
 		var a = 0;
 		var b = 0;
-		while (a == b)
-		{		
+		while (a == b) {		
 			a = Math.floor((Math.random() * selected_moves.length));
 			b = Math.floor((Math.random() * selected_moves.length));
 		}			
@@ -67,14 +62,15 @@
 		document.getElementById("move").innerHTML = selected_moves[a] + " + " + selected_moves[b];
 	}
 
-	function to_start()
-	{
-		if (selected_moves.length < 2)
-		{
-			document.getElementById('move').innerHTML = "Selecteer tenminste twee technieken";
+	function to_start(reset_reps) {
+		if (reset_reps === undefined) {
+			reset_reps = true;
+		}
+		if (selected_moves.length < 2) {
+			document.getElementById('move').innerHTML = "Select at least two moves";
 			return;
 		}
-		
+
 		stopped = false;
 		paused = false;
 		update();
@@ -82,20 +78,22 @@
 		
 		m = document.getElementById('length').value;
 		s = 0;
+
+		if (reset_reps) {
+			current_rep = 1;
+		}
 		clearInterval(interval);
 		interval = window.setInterval('count()', 1000);
 		document.getElementById('timer').innerHTML = "GO!";
 	}
 
-	function to_pause()
-	{
+	function to_pause() {
 		if (stopped) { return; }
 		paused = !paused;
 		update();
 	}
 	
-	function to_stop()
-	{
+	function to_stop() {
 		if (stopped) { return; }
 		stopped = true;
 		paused = false;
@@ -105,8 +103,7 @@
 		update();
 	}
 
-	function update()
-	{
+	function update() {
 		// Format the output by adding 0 if it is single digit //
 		if (s < 10) { var s1 = '0' + s; } else { var s1 = s; }
 		if (m < 10) { var m1 = '0' + m; } else { var m1 = m; }
@@ -114,21 +111,28 @@
 		// Display the output //
 		str = m1 + ':' + s1;
 		document.getElementById('timer').innerHTML = str;
+		var repcount = document.getElementById('repcount').value;
+		document.getElementById('repdisplay').innerHTML = 'Repetition: ' + current_rep + ' / ' + repcount;
 		
-		if (paused || stopped) { document.getElementById('timer').style.background = "#FF0000"; }
-		else { document.getElementById('timer').style.background = "#00FF00"; }
+		if (paused || stopped) {
+			document.getElementById('timer').style.background = "#FF0000";
+			document.getElementById('repdisplay').style.background = "#FF0000";
+		}
+		else {
+			document.getElementById('timer').style.background = "#00FF00";
+			document.getElementById('repdisplay').style.background = "#00FF00";
+		}
 
 		if (paused && !stopped) { document.getElementById('btnPause').value = "Verder"; }
-		else { document.getElementById('btnPause').value = "Pauze"; }
+		else { document.getElementById('btnPause').value = "Pause"; }
 	}
 
-	function count()
-	{
+	function count() {
 		if (paused || stopped) { return; }
 
 		update();
 
-		// Calculate the stop watch // 
+		// Calculate the stop watch
 		if (s > 0) {
 			s = s - 1;
 		} else {
@@ -140,9 +144,11 @@
 				}
 			} else {
 				to_pause();
-				var repeat = document.getElementById("repeat").checked;
-				if (repeat == true) {
-					setTimeout(to_start(), 1000);
+				var repcount = document.getElementById("repcount").value;
+				if (current_rep < repcount)
+				{
+					current_rep++;
+					setTimeout(to_start(false), 1000);
 				}
 			}
 		}
@@ -150,25 +156,26 @@
 </script>
 </head>
 
-<body onload="init()">
-	<h1>Wing chun motoriek oefening</h1>
+<body onload="init()" style="text-align: center;">
+	<h1>Wing Chun Trainer</h1>
 	
 	<input type="button" name="btn" id='btnStart' value="Start" onclick="to_start()";>
-	<input type="button" name="btn" id='btnPause' value="Pauze" onclick="to_pause()";>
+	<input type="button" name="btn" id='btnPause' value="Pause" onclick="to_pause()";>
 	<input type="button" name="btn" id='btnStop' value="Stop" onclick="to_stop()";>
 
-	<div id="timer" style="z-index: 2; position: relative; right: 10px; top: 10px; background-color: #ff0000; width: 100%; padding: 20px; color: black; font-size:50px; font-weight: bold;">00:00</div>
-	 
+	<div id="timer" style="z-index: 2; position: relative; right: 10px; top: 10px; background-color: #ff0000; width: 100%; padding: 20px 20px 0px 20px; color: black; font-size:50px; font-weight: bold;">00:00</div>
+	<div id="repdisplay" style="z-index: 2; position: relative; right: 10px; top: 10px; background-color: #ff0000; width: 100%; padding: 0px 20px 20px 20px; color: black; font-size:25px; font-weight: bold;">Repetition: 1 / 1</div>
 	<div id="move" style="z-index: 2; position: relative; right: 10px; top: 10px; background-color: #555555; width: 100%; padding: 20px; color: white; font-size:50px; font-weight: bold;">&nbsp;</div>
 
 	<div style="z-index: 2; position: relative; right: 0px; top: 10px; width: 100%; padding-left: 20px; padding-top: 20px; padding-bottom: 0px; color: black; font-size:20px;">
-		Minuten/drill: <input type="input" name="length" id="length" value=1 size=1 maxlength=1>&nbsp;
-		<input type="checkbox" id="repeat" checked>&nbsp;Repeat
-		&nbsp;&nbsp;|&nbsp;&nbsp;Selecteer:&nbsp;
-		<button type="button" onclick="set_selected(true)">Alles</button>&nbsp;
-		<button type="button" onclick="set_selected(false)">Niets</button>
+		Minutes/drill: <input type="input" name="length" id="length" value=1 size=1 maxlength=1>&nbsp;
+		Repeat: <input type="input" name="repcount" id="repcount" value=1 size=1 maxlength=1>&nbsp;times
+		&nbsp;&nbsp;|&nbsp;&nbsp;Select:&nbsp;
+		<button type="button" onclick="set_selected(true)">All</button>&nbsp;
+		<button type="button" onclick="set_selected(false)">None</button>
 	</div>
-	<div id="movelist" style="z-index: 2; position: relative; right: 0px; top: 10px; width: 100%; padding: 20px; color: black; font-size:24px;"></div>
+	<div id="movelist" style="z-index: 2; position: relative; right: 0px; top: 10px; width: 100%; padding: 20px; color: black; font-size:24px;">
+	</div>
 
  </body>
  </html>
